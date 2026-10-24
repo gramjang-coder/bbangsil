@@ -47,10 +47,17 @@ canvas#world{position:absolute;inset:0;width:100%;height:100%;image-rendering:pi
 .zonetag.show{display:block}
 .zoom{position:absolute;right:10px;top:8px;display:flex;flex-direction:column;gap:4px}.zoom button{width:36px;height:36px;border:2px solid var(--k);border-radius:8px;background:var(--paper);font-family:var(--fd);font-size:18px;color:var(--k);box-shadow:0 2px 0 var(--k);padding:0}
 .pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:3px;opacity:.92}
+.pad{touch-action:none}
+.emo{position:absolute;left:10px;bottom:10px;width:48px;height:48px;border:2px solid var(--k);border-radius:12px;background:var(--y);font-size:24px;box-shadow:0 3px 0 var(--k);padding:0}
+.emo:active{transform:translateY(2px);box-shadow:0 1px 0 var(--k)}
+.emopanel{position:absolute;left:10px;bottom:66px;display:grid;grid-template-columns:repeat(4,56px);gap:6px;background:var(--paper);border:2px solid var(--k);border-radius:10px;padding:8px;box-shadow:0 4px 0 var(--k);z-index:3}
+.emopanel button{border:2px solid var(--k);border-radius:8px;background:#fff;padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--fd);font-size:11px;color:var(--k)}
+.emopanel button:active{background:var(--y)}
+.emopanel img{height:34px;width:auto;image-rendering:pixelated}
 .pad button{border:2px solid var(--k);background:var(--paper);border-radius:8px;font-family:var(--fd);font-size:18px;color:var(--k);padding:0;touch-action:none;box-shadow:0 3px 0 var(--k)}
 .pad button:active,.pad button.on{transform:translateY(2px);box-shadow:0 1px 0 var(--k);background:var(--y)}
 .pad .sp{visibility:hidden}
-.hint{position:absolute;left:8px;bottom:10px;background:rgba(255,253,246,.92);border:2px solid var(--k);border-radius:4px;padding:6px 8px;font-family:var(--fd);font-size:13px;max-width:52%;line-height:1.35}
+.hint{position:absolute;left:66px;bottom:10px;background:rgba(255,253,246,.92);border:2px solid var(--k);border-radius:4px;padding:6px 8px;font-family:var(--fd);font-size:13px;max-width:52%;line-height:1.35}
 .edit{position:absolute;left:8px;bottom:60px;display:flex;flex-direction:column;gap:6px;z-index:2}.edit .btn{font-size:13px;padding:6px 10px}
 .modal{position:absolute;inset:0;background:rgba(58,46,31,.55);display:none;align-items:flex-end;justify-content:center;padding:10px}
 .modal.open{display:flex}
@@ -148,7 +155,9 @@ canvas#world{position:absolute;inset:0;width:100%;height:100%;image-rendering:pi
     <canvas id="world"></canvas>
     <div class="zonetag" id="zonetag"></div>
     <div class="zoom"><button id="z-in" aria-label="확대">＋</button><button id="z-out" aria-label="축소">－</button><button id="mute" aria-label="소리">🔊</button></div>
-    <div class="hint" id="hint">방향키로 이동, ● 점프. ①~⑦ 존 앞에 서면 입장 태그가 떠요. 두 손가락으로 줌.</div>
+    <div class="hint" id="hint">방향키로 이동, ● 점프 (공중에서 한 번 더 누르면 빙글!). ①~⑦ 존 앞에 서면 입장 태그가 떠요. 두 손가락으로 줌.</div>
+    <button class="emo" id="emo" aria-label="빵실이 이모지">😊</button>
+    <div class="emopanel" id="emopanel" hidden></div>
     <div class="pad" id="pad">
       <span class="sp"></span><button data-d="up" aria-label="위">▲</button><span class="sp"></span>
       <button data-d="left" aria-label="왼쪽">◀</button><button data-d="act" aria-label="점프/입장" id="act">●</button><button data-d="right" aria-label="오른쪽">▶</button>
@@ -262,8 +271,17 @@ const LAYOUT={
 /* ===== 상태 ===== */
 const START={x:1120,y:800};
 let state={done:{},breads:[],prize:null,hits:0};
-const P={x:START.x,y:START.y,face:'down',frame:0,anim:0,moving:false,jump:0};
-function jump(){if(P.jump<=0&&!modalOpen){P.jump=1;say('점프!');SFX.jump();}}
+const P={x:START.x,y:START.y,face:'down',frame:0,anim:0,moving:false,jump:0,idle:0,act:null,actT:0,squash:0,spin:0,bubble:null,bubbleT:0,emote:null,emoteT:0};
+let lastJump=0;
+function jump(){if(modalOpen)return;const now=performance.now();
+  if(P.jump>0){if(P.jump>0.35&&!P.spin){P.spin=1;SFX.pop();say('빙글!');}return;} // 공중에서 한 번 더 → 빙글 회전
+  P.jump=1;P.act=null;P.idle=0;SFX.jump();say(now-lastJump<700?'통통!':'점프!');lastJump=now;}
+function bubble(t,ms=1100){P.bubble=t;P.bubbleT=ms;}
+const EMOTES=[['happy','신남','빠-앙!'],['smile','웃음','뭉냐~'],['shock','당황','?!'],['cry','눈물','뭉냐...'],['sit','앉기','...'],['interact','빵 들기','빠-앙!'],['run','달리기','!!'],['look','두리번','?']];
+function emote(key,txt){P.emote=key;P.emoteT=1600;P.idle=0;P.act=null;bubble(txt,1500);SFX[key==='cry'?'mungnya':key==='shock'?'miss':'bbang']();}
+const emoPanel=document.getElementById('emopanel');
+EMOTES.forEach(([k,n,t])=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<img src="${ASSETS[k]}" alt=""><span>${n}</span>`;b.onclick=()=>{emote(k,t);emoPanel.hidden=true;};emoPanel.append(b);});
+document.getElementById('emo').onclick=()=>{emoPanel.hidden=!emoPanel.hidden;document.getElementById('hint').hidden=true;};
 const keys_={};let inZone=null,modalOpen=false;let EDIT=false,editPts=[];
 let camX=0,camY=0;
 
@@ -271,6 +289,8 @@ let camX=0,camY=0;
 const SCALE=0.66; // 시트 프레임(≈140px) → 맵 속 빵실이 크기(≈70px)
 function frameFor(){
   if(P.jump>0)return{img:IMG.jump,flip:P.face==='left',bob:0};
+  if(P.emoteT>0)return{img:IMG[P.emote],flip:false,bob:P.emote==='run'?Math.abs(Math.sin(performance.now()/90))*4:0};
+  if(!P.moving&&P.act==='look')return{img:IMG.w_side,flip:P.lookDir==='left',bob:0};
   if(!P.moving)return{img:P.face==='up'?IMG.back:P.face==='down'?IMG.w_front:IMG.w_side,flip:P.face==='left',bob:0};
   const b=P.frame%2?2:0;
   if(P.face==='down')return{img:[IMG.w_front,IMG.w_fl,IMG.w_front,IMG.w_fr][P.frame],flip:false,bob:b};
@@ -306,9 +326,19 @@ function render(){
     ctx.setLineDash([]);ctx.lineWidth=2;ctx.globalAlpha=.5+.3*Math.sin(t*2);ctx.beginPath();ctx.arc(0,0,fr*.6,0,7);ctx.stroke();ctx.globalAlpha=1;ctx.restore();
     txt(lab,fx,fy+fr*.55+16,16,d?'#3182F6':'#C13C8E','Jua');}
   drawMarkers();
-  const f=frameFor();const w=f.img.width*SCALE,h=f.img.height*SCALE;const air=P.jump>0?Math.sin(P.jump*Math.PI)*34:0;
-  ctx.fillStyle='rgba(58,46,31,.25)';ctx.beginPath();ctx.ellipse(P.x,P.y+2,w*.32,6,0,0,7);ctx.fill();
-  ctx.save();ctx.translate(Math.round(P.x),Math.round(P.y-f.bob-air));if(f.flip)ctx.scale(-1,1);ctx.drawImage(f.img,-w/2,-h+4,w,h);ctx.restore();
+  const f=frameFor();const w=f.img.width*SCALE,h=f.img.height*SCALE;
+  let air=P.jump>0?Math.sin(P.jump*Math.PI)*34:0;
+  if(P.act==='hop'){const t=1-P.actT/420;air+=Math.sin(t*Math.PI)*12;}
+  const sq=P.squash>0?Math.sin(P.squash*Math.PI):0;const sx=1+sq*.18,sy=1-sq*.16;
+  const wig=P.act==='wiggle'?Math.sin((1-P.actT/800)*Math.PI*4)*0.09:0;
+  const rot=P.spin>0?(1-P.spin)*Math.PI*2*(f.flip?-1:1):0;
+  ctx.fillStyle='rgba(58,46,31,.25)';ctx.beginPath();ctx.ellipse(P.x,P.y+2,w*.32*(1-air/120),6*(1-air/120),0,0,7);ctx.fill();
+  ctx.save();ctx.translate(Math.round(P.x),Math.round(P.y-f.bob-air));ctx.rotate(wig+rot);ctx.scale(sx,sy);if(f.flip)ctx.scale(-1,1);ctx.drawImage(f.img,-w/2,-h+4,w,h);ctx.restore();
+  if(P.bubble){const bx=P.x+w*.45,by=P.y-h-air-6;ctx.font='16px Jua, sans-serif';const tw=ctx.measureText(P.bubble).width+16;
+    ctx.fillStyle='#3A2E1F';ctx.fillRect(bx-2,by-24,tw+4,28);ctx.fillStyle='#fff';ctx.fillRect(bx,by-22,tw,24);
+    ctx.fillStyle='#3A2E1F';ctx.beginPath();ctx.moveTo(bx+6,by+2);ctx.lineTo(bx+14,by+2);ctx.lineTo(bx+4,by+9);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(bx+7,by+1);ctx.lineTo(bx+12,by+1);ctx.lineTo(bx+6,by+6);ctx.fill();
+    ctx.fillStyle='#3A2E1F';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(P.bubble,bx+tw/2,by-10);}
   for(const o of OBJECTS){if(P.y<o.y)drawObj(o);}
   if(EDIT){ctx.strokeStyle='rgba(255,60,60,.9)';BLOCK.forEach(([a,b,w2,h2])=>ctx.strokeRect(a,b,w2,h2));}
   ctx.restore();
@@ -327,7 +357,18 @@ function loop(now){
       if(walkable(nx,P.y))P.x=nx;if(walkable(P.x,ny))P.y=ny;
       P.anim+=dt;if(P.anim>150){P.anim=0;P.frame=(P.frame+1)%4;if(P.jump<=0&&P.frame%2===1)SFX[P.frame===1?'step1':'step2']();}
     }
-    if(P.jump>0){P.jump-=dt/520;if(P.jump<=0){P.jump=0;say('빠-앙!');SFX.land();}}
+    if(P.jump>0){P.jump-=dt/520;if(P.spin>0){P.spin=Math.max(0,P.spin-dt/380);}if(P.jump<=0){P.jump=0;P.spin=0;P.squash=1;say('빠-앙!');SFX.land();}}
+    if(P.squash>0)P.squash=Math.max(0,P.squash-dt/160);
+    if(P.emoteT>0){P.emoteT-=dt;if(P.moving||P.jump>0||P.emoteT<=0){P.emoteT=0;P.emote=null;}}
+    if(P.bubbleT>0){P.bubbleT-=dt;if(P.bubbleT<=0)P.bubble=null;}
+    // 가만히 있으면 귀여운 짓
+    if(P.moving||P.jump>0){P.idle=0;P.act=null;}else{P.idle+=dt;
+      if(P.act){P.actT-=dt;if(P.actT<=0){P.act=null;P.idle=0;}}
+      else if(P.idle>2600+Math.random()*1800){const r=Math.random();
+        if(r<0.3){P.act='look';P.actT=900;P.lookDir=Math.random()<.5?'left':'right';}
+        else if(r<0.5){P.act='hop';P.actT=420;SFX.step1();}
+        else if(r<0.75){P.act='wiggle';P.actT=800;}
+        else{P.act='bubble';P.actT=1200;bubble(Math.random()<.6?'뭉냐':'빠-앙!');SFX.mungnya();}}}
     const z=[...Z,...INFO].find(z=>{const [x,y,w,h]=z.door,m=0;return P.x>x-m&&P.x<x+w+m&&P.y>y-m&&P.y<y+h+m;});
     if(z!==inZone){inZone=z;const tag=document.getElementById('zonetag');if(z){tag.textContent=`${typeof z.id==='number'?z.id+' ':''}${z.name} · 여기 눌러 입장`;tag.classList.add('show');}else if(!EDIT)tag.classList.remove('show');}
   }
@@ -350,11 +391,19 @@ document.getElementById('e-tp').onclick=()=>{const [x,y]=editPts[0]||[P.x,P.y];P
 document.getElementById('e-copy').onclick=function(){const cfg='const WALK='+JSON.stringify(WALK)+';\nconst BLOCK='+JSON.stringify(BLOCK)+';\nconst Z='+JSON.stringify(Z)+';';const b=this;const ok=()=>{b.textContent='복사됨';};
   const fb=()=>{const t=document.createElement('textarea');t.value=cfg;document.body.append(t);t.select();try{document.execCommand('copy');ok();}catch(e){b.textContent='복사 불가';}t.remove();};
   if(navigator.clipboard?.writeText)navigator.clipboard.writeText(cfg).then(ok,fb);else fb();};
-document.querySelectorAll('#pad button').forEach(b=>{const d=b.dataset.d;
-  if(d==='act'){b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('on');if(modalOpen)return;if(inZone)enter(inZone);else jump();});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>b.classList.remove('on')));return;}
-  const on=e=>{e.preventDefault();keys_[d]=true;b.classList.add('on');},off=()=>{keys_[d]=false;b.classList.remove('on');};
-  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointerleave',off);b.addEventListener('pointercancel',off);
-});
+/* 패드: 손가락마다 따로 추적 → 이동 + 점프 동시 입력, 엄지 미끄러뜨려 방향 전환 */
+const pad=document.getElementById('pad'),padBtns=[...pad.querySelectorAll('button')];
+const touchDir=new Map(); // pointerId -> dir
+function dirAt(x,y){const el=document.elementFromPoint(x,y);const b=el&&el.closest?el.closest('#pad button'):null;return b?b.dataset.d:null;}
+function refreshPad(){const active=new Set(touchDir.values());['up','down','left','right'].forEach(d=>keys_[d]=active.has(d));padBtns.forEach(b=>b.classList.toggle('on',active.has(b.dataset.d)));}
+function act(){if(modalOpen)return;if(inZone)enter(inZone);else jump();}
+pad.addEventListener('pointerdown',e=>{e.preventDefault();try{e.target.releasePointerCapture?.(e.pointerId);}catch(x){}const d=dirAt(e.clientX,e.clientY);if(!d)return;
+  if(d==='act'){act();const ab=padBtns.find(b=>b.dataset.d==='act');ab.classList.add('on');setTimeout(()=>ab.classList.remove('on'),150);return;}
+  touchDir.set(e.pointerId,d);refreshPad();});
+addEventListener('pointermove',e=>{if(!touchDir.has(e.pointerId))return;const d=dirAt(e.clientX,e.clientY);if(d&&d!=='act'&&d!==touchDir.get(e.pointerId)){touchDir.set(e.pointerId,d);refreshPad();}},{passive:true});
+['pointerup','pointercancel'].forEach(t=>addEventListener(t,e=>{if(touchDir.has(e.pointerId)){touchDir.delete(e.pointerId);refreshPad();}}));
+pad.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});pad.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+addEventListener('blur',()=>{touchDir.clear();refreshPad();});
 /* ===== HUD / 모달 ===== */
 function say(s){document.getElementById('voice').textContent=s;}
 function hud(){const n=Object.keys(state.done).length;document.getElementById('lv').textContent=n+1;document.getElementById('pct').textContent=`${n}/${NZ}`;document.getElementById('bar').style.width=(n/NZ*100)+'%';}

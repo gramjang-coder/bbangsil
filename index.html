@@ -142,7 +142,7 @@ canvas#world{position:absolute;inset:0;width:100%;height:100%;image-rendering:pi
 <div id="app" hidden>
   <div class="hud">
     <div class="row"><span class="lv">LV.<b id="lv">1</b></span><div class="bar"><i id="bar"></i></div><span id="pct">0/5</span></div>
-    <div class="voice" id="voice">빵덕후 육성 시스템 가동. 입구에서 출발해요.</div>
+    <div class="voice" id="voice">빵덕후 육성 시스템 가동. 광장에서 출발해요.</div>
   </div>
   <div class="stage">
     <canvas id="world"></canvas>
@@ -260,7 +260,7 @@ const LAYOUT={
 };
 
 /* ===== 상태 ===== */
-const START={x:400,y:1020};
+const START={x:1120,y:800};
 let state={done:{},breads:[],prize:null,hits:0};
 const P={x:START.x,y:START.y,face:'down',frame:0,anim:0,moving:false,jump:0};
 function jump(){if(P.jump<=0&&!modalOpen){P.jump=1;say('점프!');SFX.jump();}}
@@ -561,7 +561,7 @@ function result(){
 /* ===== 부팅 ===== */
 function boot(){
   document.getElementById('introHero').append(sp('jump'));
-  document.getElementById('startBtn').onclick=()=>{ac();SFX.enter();document.getElementById('intro').hidden=true;document.getElementById('app').hidden=false;fit();say('빵덕후 육성 시스템 가동. 입구에서 출발해요.');};
+  document.getElementById('startBtn').onclick=()=>{ac();SFX.enter();document.getElementById('intro').hidden=true;document.getElementById('app').hidden=false;fit();say('빵덕후 육성 시스템 가동. 광장에서 출발해요.');};
   const start=d=>{if(d&&d.done){state=Object.assign(state,d);P.x=d.x??P.x;P.y=d.y??P.y;}if(!walkable(P.x,P.y)){P.x=START.x;P.y=START.y;}hud();requestAnimationFrame(loop);setTimeout(()=>{document.getElementById('hint').hidden=true;},6000);};
   window.claude?.hot?.snapshot?.(()=>({...state,x:P.x,y:P.y}));
   window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});

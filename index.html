@@ -57,7 +57,7 @@ canvas#world{position:absolute;inset:0;width:100%;height:100%;image-rendering:pi
 .pad button{border:2px solid var(--k);background:var(--paper);border-radius:8px;font-family:var(--fd);font-size:18px;color:var(--k);padding:0;touch-action:none;box-shadow:0 3px 0 var(--k)}
 .pad button:active,.pad button.on{transform:translateY(2px);box-shadow:0 1px 0 var(--k);background:var(--y)}
 .pad .sp{visibility:hidden}
-.hint{position:absolute;left:66px;bottom:10px;background:rgba(255,253,246,.92);border:2px solid var(--k);border-radius:4px;padding:6px 8px;font-family:var(--fd);font-size:13px;max-width:52%;line-height:1.35}
+.hint{position:absolute;left:8px;top:48px;background:rgba(255,253,246,.92);border:2px solid var(--k);border-radius:4px;padding:6px 8px;font-family:var(--fd);font-size:13px;max-width:62%;line-height:1.4}
 .edit{position:absolute;left:8px;bottom:60px;display:flex;flex-direction:column;gap:6px;z-index:2}.edit .btn{font-size:13px;padding:6px 10px}
 .modal{position:absolute;inset:0;background:rgba(58,46,31,.55);display:none;align-items:flex-end;justify-content:center;padding:10px}
 .modal.open{display:flex}
@@ -155,7 +155,7 @@ canvas#world{position:absolute;inset:0;width:100%;height:100%;image-rendering:pi
     <canvas id="world"></canvas>
     <div class="zonetag" id="zonetag"></div>
     <div class="zoom"><button id="z-in" aria-label="확대">＋</button><button id="z-out" aria-label="축소">－</button><button id="mute" aria-label="소리">🔊</button></div>
-    <div class="hint" id="hint">방향키로 이동, ● 점프 (공중에서 한 번 더 누르면 빙글!). ①~⑦ 존 앞에 서면 입장 태그가 떠요. 두 손가락으로 줌.</div>
+    <div class="hint" id="hint">방향키로 걷고 ●로 점프해요. 공중에서 ● 한 번 더 누르면 빙글! 존 앞에 서면 입장 태그가 떠요.</div>
     <button class="emo" id="emo" aria-label="빵실이 이모지">😊</button>
     <div class="emopanel" id="emopanel" hidden></div>
     <div class="pad" id="pad">
